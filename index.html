@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f4f0e6">
+  <title>Vital N Application Guide</title>
+  <link rel="stylesheet" href="style.css?v=2">
+  <style>[hidden]{display:none!important}</style>
+  <style>.hero .start{animation:start-bounce 2.2s ease-in-out infinite!important}.hero .start:active{animation:none!important}</style>
+</head>
+<body>
+  <main id="app" aria-live="polite">
+    <section class="screen active hero" data-screen="welcome">
+      <video class="hero-video" autoplay muted loop playsinline preload="metadata" aria-hidden="true">
+        <source src="assets/videos/intro.mp4" type="video/mp4">
+      </video>
+      <button class="start" data-go="crop">START</button>
+    </section>
+
+    <section class="screen crop-screen" data-screen="crop">
+      <video id="crop-video" class="crop-video" autoplay muted playsinline preload="metadata" aria-hidden="true">
+        <source src="assets/audio/choose-crop.mp4" type="video/mp4">
+      </video>
+      <button class="crop-back" data-go="welcome" aria-label="Back to welcome">←</button>
+      <div class="crop-heading">
+        <h2 class="crop-question">Anong itatanim mo?</h2>
+        <p class="crop-hint">Pindutin sa baba ang iyong pananim.</p>
+      </div>
+      <div class="crop-choices">
+        <button class="crop-choice palay" data-go="rice-method"><span aria-hidden="true">🌾</span><strong>Palay</strong></button>
+        <button class="crop-choice mais" data-video="corn"><span aria-hidden="true">🌽</span><strong>Mais</strong></button>
+        <button class="crop-choice gulay" data-video="vegetables"><span aria-hidden="true">🧅</span><strong>Sibuyas/Ibang Gulay</strong></button>
+      </div>
+    </section>
+
+    <section class="screen rice-screen" data-screen="rice-method">
+      <video id="rice-method-video" class="rice-method-video" autoplay muted playsinline preload="metadata" aria-hidden="true">
+        <source src="assets/audio/rice-method.mp4" type="video/mp4">
+      </video>
+      <div class="rice-heading">
+        <h2 class="rice-question">Anong palay mo?</h2>
+        <p class="rice-hint">Pindutin ang dapog o buto.</p>
+      </div>
+      <div class="rice-choices">
+        <button class="rice-choice buto" data-video="rice-seed"><span aria-hidden="true">🌾</span><strong>Buto</strong></button>
+        <button class="rice-choice dapog" data-video="rice-seedling"><span aria-hidden="true">🌱</span><strong>Dapog</strong></button>
+      </div>
+      <button class="rice-back" data-go="crop" aria-label="Bumalik sa pagpili ng pananim"><span aria-hidden="true">↩</span> Bumalik</button>
+    </section>
+
+    <section class="screen video-screen" data-screen="video">
+      <div class="guide-layout">
+        <aside class="steps-panel">
+          <h2 id="video-title">Palay: Buto</h2>
+          <p class="steps-subtitle">Mga Hakbang</p>
+          <ol class="steps-list" id="steps-list"></ol>
+        </aside>
+        <div class="player-column">
+          <div class="player-shell">
+            <video id="guide-video" playsinline preload="auto"></video>
+            <div class="video-loading" id="video-loading" hidden><span class="spinner" aria-hidden="true"></span><p>Loading video…</p></div>
+            <div class="media-missing" id="media-missing" hidden><span>▶</span><strong>Video ready for your file</strong><small id="missing-path"></small></div>
+            <div class="controls">
+              <button id="play" aria-label="Play or pause">▶</button>
+              <span id="time">0:00 / 0:00</span>
+              <input id="progress" type="range" min="0" max="100" value="0" aria-label="Video progress">
+              <button id="mute" aria-label="Mute or unmute">♩</button>
+              <button id="fullscreen" aria-label="Fullscreen">⛶</button>
+            </div>
+          </div>
+          <div class="guide-actions">
+            <button class="btn-outline" data-back aria-label="Bumalik"><span aria-hidden="true">↺</span> Bumalik</button>
+            <button class="btn-green" id="kasunod-btn">Kasunod <span aria-hidden="true">→</span></button>
+          </div>
+        </div>
+      </div>
+      <button class="fallback-next" id="fallback-next" hidden>Continue to next video →</button>
+    </section>
+
+    <section class="screen complete" data-screen="complete">
+      <div class="confetti-layer" id="confetti-layer" aria-hidden="true"></div>
+      <div class="celebrate-overlay" id="celebrate-overlay" aria-hidden="true"><span>Tapos na!</span></div>
+      <div class="complete-hero">
+        <div class="complete-left">
+          <div class="complete-heading">
+            <div class="check-badge" aria-hidden="true">✓</div>
+            <h2>Ayos!</h2>
+            <p class="complete-sub">Alam mo na ang tamang paggamit ng Vital N.</p>
+          </div>
+          <div class="complete-summary">
+            <div class="complete-buttons">
+              <button class="btn-green" id="repeat-video"><span aria-hidden="true">↻</span> Ulitin ang video</button>
+              <button class="btn-green btn-gradient" id="finish-guide"><span aria-hidden="true">✓</span> Tapos na</button>
+            </div>
+            <ol class="mini-steps">
+              <li class="mini-step"><span class="step-number">1</span><span class="step-icon" aria-hidden="true"><svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M20 6l10 6-2 3-3-1.7V19l3 4v17a2 2 0 01-2 2h-8a2 2 0 01-2-2V23l3-4v-8" stroke="#153329" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M18 27h8" stroke="#153329" stroke-width="2" stroke-linecap="round"/><path d="M28 12l4 2-1.5 2.6L26.5 15" stroke="#153329" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="step-label">Ihalo sa tubig</span></li>
+              <li class="mini-step"><span class="step-number">2</span><span class="step-icon" aria-hidden="true"><svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M20 8h8v6l3 5v19a2 2 0 01-2 2H19a2 2 0 01-2-2V19l3-5V8z" stroke="#153329" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M19 26h10" stroke="#153329" stroke-width="2" stroke-linecap="round"/><path d="M11 16l3 3M11 24l3-1M37 16l-3 3M37 24l-3-1" stroke="#153329" stroke-width="2" stroke-linecap="round"/></svg></span><span class="step-label">Maghintay ng 8 oras</span></li>
+              <li class="mini-step"><span class="step-number">3</span><span class="step-icon" aria-hidden="true"><svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M13 18h22l-3 20a2 2 0 01-2 1.7H18a2 2 0 01-2-1.7L13 18z" stroke="#153329" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M13 18a11 4 0 0022 0" stroke="#153329" stroke-width="2" stroke-linecap="round"/><path d="M24 8v6M20 10l4 4 4-4" stroke="#153329" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="step-label">Dagdagan ng tubig</span></li>
+              <li class="mini-step"><span class="step-number">4</span><span class="step-icon" aria-hidden="true"><svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M14 26a10 7 0 0020 0v6a10 7 0 01-20 0v-6z" stroke="#153329" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><ellipse cx="24" cy="26" rx="10" ry="7" stroke="#153329" stroke-width="2"/><path d="M31 10l6 3-1.4 2.6-2.1-1.1-3 8.5-2-.7 3-8.5-2.1-1.1L31 10z" stroke="#153329" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="21" cy="25" r="1.3" fill="#153329"/><circle cx="25" cy="27" r="1.3" fill="#153329"/><circle cx="28" cy="24" r="1.3" fill="#153329"/></svg></span><span class="step-label">I-apply sa buto</span></li>
+              <li class="mini-step"><span class="step-number">5</span><span class="step-icon" aria-hidden="true"><svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M24 30V16" stroke="#153329" stroke-width="2" stroke-linecap="round"/><path d="M24 22c-3-6-9-8-13-7 0 5 4 10 13 9z" stroke="#153329" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M24 18c2-6 7-9 11-8 0 5-3 10-11 10z" stroke="#153329" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M14 34c3-3 7-4 10-4s7 1 10 4" stroke="#153329" stroke-width="2" stroke-linecap="round"/><path d="M12 38h24" stroke="#153329" stroke-width="2" stroke-linecap="round"/></svg></span><span class="step-label">Itanim</span></li>
+            </ol>
+          </div>
+        </div>
+        <div class="complete-video-wrap">
+          <video id="complete-video" class="bg-video" playsinline preload="metadata" aria-hidden="true">
+            <source src="assets/videos/final-common.mp4" type="video/mp4">
+          </video>
+        </div>
+      </div>
+
+      <div class="tips-section">
+        <h3>May tanong ka pa?</h3>
+        <p class="tips-sub">Pumili ng tip para malaman.</p>
+        <div class="tips-grid">
+          <details class="tip-card">
+            <summary><span class="tip-icon" aria-hidden="true">💧</span><span class="tip-text"><strong>Tubig</strong><small>Pwede bang tubig gripo?</small></span><span class="tip-chevron" aria-hidden="true">›</span></summary>
+            <div class="tip-answer"><p> Hindi. Mainam na distilled water. Hihina ang epekto kung gagamit ka ng tubig gripo o ibang klaseng tubig.</p></div>
+          </details>
+          <details class="tip-card">
+            <summary><span class="tip-icon" aria-hidden="true">🕐</span><span class="tip-text"><strong>Pwede bang tanim agad pagkahalo?</strong><small>Bakit kailangang ng 8 oras?</small></span><span class="tip-chevron" aria-hidden="true">›</span></summary>
+            <div class="tip-answer"><p>Hintayin nang hindi bababa sa 8 oras bago gamitin dahil naa-activate ang bacteria sa Vital N Plus. Ang inirerekomendang preparation window ay 8 hanggang 12 oras. Baba ang epekto kapag hindi sinunod ang step na ito.</p></div>
+          </details>
+          <details class="tip-card">
+            <summary><span class="tip-icon" aria-hidden="true">⏰</span><span class="tip-text"><strong>Lumampas sa 8 oras?</strong><small>Pwede pa bang gamitin?</small></span><span class="tip-chevron" aria-hidden="true">›</span></summary>
+            <div class="tip-answer"><p>Oo pero huwag hayaang lumagpas sa 24 oras dahil humihina ang bacteria kapag matagal na hindi nailagay sa buto o ugat.</p></div>
+          </details>
+          <a class="tip-card tip-link" href="https://www.facebook.com/profile.php?id=61573520035450" target="_blank" rel="noopener">
+            <span class="tip-icon" aria-hidden="true">💬</span><span class="tip-text"><strong>May tanong pa?</strong><small>Kausapin ang eksperto: Haltec</small></span><span class="tip-chevron" aria-hidden="true">↗</span>
+          </a>
+          <details class="tip-card">
+            <summary><span class="tip-icon" aria-hidden="true">🪣</span><span class="tip-text"><strong>Dami ng tubig</strong><small>Tama ba ang sukat ko?</small></span><span class="tip-chevron" aria-hidden="true">›</span></summary>
+            <div class="tip-answer">
+              <div class="ratio-table-wrap">
+                <table class="ratio-table">
+                  <thead><tr><th>Crop</th><th>Water (Activation)</th><th>Water (Dilution)</th><th>Crop Coverage</th></tr></thead>
+                  <tbody>
+                    <tr><td>Rice (Seeds)</td><td>1 liter</td><td>8 liters</td><td>50–80 kg of seeds</td></tr>
+                    <tr><td>Rice (Seedlings)</td><td>1 liter</td><td>14 liters</td><td>1 ha seedlings (spray)</td></tr>
+                    <tr><td>Corn</td><td>500 ml</td><td>up to 10 liters</td><td>18 kg of seeds</td></tr>
+                    <tr><td>Onion &amp; Vegetables</td><td>500 ml</td><td>Up to 14 liters</td><td>Seeds or seedlings up to 1 ha</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </details>
+        </div>
+      </div>
+
+    </section>
+  </main>
+  <script src="app.js?v=3"></script>
+</body>
+</html>
