@@ -12,16 +12,12 @@
 <body>
   <main id="app" aria-live="polite">
     <section class="screen active hero" data-screen="welcome">
-      <video class="hero-video" autoplay muted loop playsinline preload="metadata" aria-hidden="true">
-        <source src="assets/videos/intro.mp4" type="video/mp4">
-      </video>
+      <div class="hero-video yt-embed" aria-hidden="true"><div id="yt-hero"></div></div>
       <button class="start" data-go="crop">START</button>
     </section>
 
     <section class="screen crop-screen" data-screen="crop">
-      <video id="crop-video" class="crop-video" autoplay muted playsinline preload="metadata" aria-hidden="true">
-        <source src="assets/audio/choose-crop.mp4" type="video/mp4">
-      </video>
+      <div class="crop-video yt-embed" aria-hidden="true"><div id="yt-crop"></div></div>
       <button class="crop-back" data-go="welcome" aria-label="Back to welcome">←</button>
       <div class="crop-heading">
         <h2 class="crop-question">Anong itatanim mo?</h2>
@@ -35,9 +31,7 @@
     </section>
 
     <section class="screen rice-screen" data-screen="rice-method">
-      <video id="rice-method-video" class="rice-method-video" autoplay muted playsinline preload="metadata" aria-hidden="true">
-        <source src="assets/audio/rice-method.mp4" type="video/mp4">
-      </video>
+      <div class="rice-method-video yt-embed" aria-hidden="true"><div id="yt-rice-method"></div></div>
       <div class="rice-heading">
         <h2 class="rice-question">Anong palay mo?</h2>
         <p class="rice-hint">Pindutin ang dapog o buto.</p>
@@ -58,16 +52,8 @@
         </aside>
         <div class="player-column">
           <div class="player-shell">
-            <video id="guide-video" playsinline preload="auto"></video>
+            <div class="yt-embed guide-embed"><div id="yt-guide"></div></div>
             <div class="video-loading" id="video-loading" hidden><span class="spinner" aria-hidden="true"></span><p>Loading video…</p></div>
-            <div class="media-missing" id="media-missing" hidden><span>▶</span><strong>Video ready for your file</strong><small id="missing-path"></small></div>
-            <div class="controls">
-              <button id="play" aria-label="Play or pause">▶</button>
-              <span id="time">0:00 / 0:00</span>
-              <input id="progress" type="range" min="0" max="100" value="0" aria-label="Video progress">
-              <button id="mute" aria-label="Mute or unmute">♩</button>
-              <button id="fullscreen" aria-label="Fullscreen">⛶</button>
-            </div>
           </div>
           <div class="guide-actions">
             <button class="btn-outline" data-back aria-label="Bumalik"><span aria-hidden="true">↺</span> Bumalik</button>
@@ -75,7 +61,6 @@
           </div>
         </div>
       </div>
-      <button class="fallback-next" id="fallback-next" hidden>Continue to next video →</button>
     </section>
 
     <section class="screen complete" data-screen="complete">
@@ -103,9 +88,7 @@
           </div>
         </div>
         <div class="complete-video-wrap">
-          <video id="complete-video" class="bg-video" playsinline preload="metadata" aria-hidden="true">
-            <source src="assets/videos/final-common.mp4" type="video/mp4">
-          </video>
+          <div class="bg-video yt-embed" aria-hidden="true"><div id="yt-complete"></div></div>
         </div>
       </div>
 
@@ -149,6 +132,7 @@
 
     </section>
   </main>
-  <script src="app.js?v=3"></script>
+  <script src="https://www.youtube.com/iframe_api"></script>
+  <script src="app.js?v=4"></script>
 </body>
 </html>

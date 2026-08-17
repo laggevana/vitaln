@@ -6,25 +6,31 @@ const guideSteps = [
   { icon: "🌱", label: "Itanim", time: 49.5 }
 ];
 
+const YT_IDS = {
+  intro: "Yx295QTOyw8",
+  cropChoice: "J9mEgaHc2sc",
+  riceMethod: "DvQ6T6QFu8k",
+  "rice-seed": "rPlBRyoWGfc",
+  "rice-seedling": "POAlM1mhih4",
+  corn: "S4mlJ65Z544",
+  vegetables: "Hp6B-MxKHOc",
+  complete: "rQN6bsDoLEc"
+};
+
 const media = {
-  "rice-seed": { title: "Palay: Buto", src: "assets/videos/rice-seed.mp4", steps: guideSteps },
-  "rice-seedling": { title: "Palay: Dapog", src: "assets/videos/rice-seedling.mp4", steps: guideSteps },
-  corn: { title: "Mais", src: "assets/videos/corn.mp4", steps: guideSteps },
-  vegetables: { title: "Sibuyas", src: "assets/videos/vegetables-onion.mp4", steps: guideSteps }
+  "rice-seed": { title: "Palay: Buto", ytId: YT_IDS["rice-seed"], steps: guideSteps },
+  "rice-seedling": { title: "Palay: Dapog", ytId: YT_IDS["rice-seedling"], steps: guideSteps },
+  corn: { title: "Mais", ytId: YT_IDS.corn, steps: guideSteps },
+  vegetables: { title: "Sibuyas", ytId: YT_IDS.vegetables, steps: guideSteps }
 };
 
 const screens = [...document.querySelectorAll(".screen")];
-const video = document.querySelector("#guide-video");
-const cropVideo = document.querySelector("#crop-video");
-const riceMethodVideo = document.querySelector("#rice-method-video");
-const completeVideo = document.querySelector("#complete-video");
-const missing = document.querySelector("#media-missing");
-const fallbackNext = document.querySelector("#fallback-next");
+const videoLoading = document.querySelector("#video-loading");
 let activeScreen = "welcome";
 let previousSelection = "crop";
 let currentVideo = null;
 let lastCropVideo = null;
-let narration = null;
+let videoWatchedFully = false;
 let cropChosen = false;
 let cropNudgeStarted = false;
 let nudgeTimers = [];
@@ -74,6 +80,22 @@ function clearCompleteNudges() {
   completeActionButtons.forEach(btn => btn.classList.remove("nudge"));
 }
 
+function startCompleteNudgeLoop() {
+  clearCompleteNudges();
+  function cycle() {
+    if (completeActionChosen) return;
+    completeActionButtons.forEach((btn, i) => {
+      completeNudgeTimers.push(setTimeout(() => {
+        if (completeActionChosen) return;
+        btn.classList.add("nudge");
+        completeNudgeTimers.push(setTimeout(() => btn.classList.remove("nudge"), NUDGE_DURATION));
+      }, i * NUDGE_STAGGER));
+    });
+    completeNudgeTimers.push(setTimeout(cycle, completeActionButtons.length * NUDGE_STAGGER + NUDGE_LOOP_GAP));
+  }
+  cycle();
+}
+
 const confettiLayer = document.querySelector("#confetti-layer");
 const celebrateOverlay = document.querySelector("#celebrate-overlay");
 const confettiColors = ["#cde548", "#174d35", "#5f9d36", "#ffffff", "#88711e"];
@@ -101,79 +123,182 @@ function showCelebration() {
   setTimeout(() => celebrateOverlay.classList.remove("show"), 2000);
 }
 
-function startCompleteNudgeLoop() {
-  clearCompleteNudges();
-  function cycle() {
-    if (completeActionChosen) return;
-    completeActionButtons.forEach((btn, i) => {
-      completeNudgeTimers.push(setTimeout(() => {
-        if (completeActionChosen) return;
-        btn.classList.add("nudge");
-        completeNudgeTimers.push(setTimeout(() => btn.classList.remove("nudge"), NUDGE_DURATION));
-      }, i * NUDGE_STAGGER));
-    });
-    completeNudgeTimers.push(setTimeout(cycle, completeActionButtons.length * NUDGE_STAGGER + NUDGE_LOOP_GAP));
+// ---- YouTube player embedding ----
+
+const EMBED_WRAP_SELECTORS = {
+  hero: ".hero-video",
+  crop: ".crop-video",
+  riceMethod: ".rice-method-video",
+  guide: ".guide-embed",
+  complete: ".complete-video-wrap .bg-video"
+};
+
+function fitEmbed(key) {
+  const wrap = document.querySelector(EMBED_WRAP_SELECTORS[key]);
+  const iframe = wrap && wrap.querySelector("iframe");
+  if (!wrap || !iframe) return;
+  const cw = wrap.clientWidth, ch = wrap.clientHeight;
+  if (!cw || !ch) return;
+  const videoRatio = 16 / 9;
+  let w, h;
+  if (cw / ch > videoRatio) { w = cw; h = w / videoRatio; }
+  else { h = ch; w = h * videoRatio; }
+  iframe.style.width = w + "px";
+  iframe.style.height = h + "px";
+  iframe.style.left = ((cw - w) / 2) + "px";
+  iframe.style.top = ((ch - h) / 2) + "px";
+}
+
+function fitAllEmbeds() {
+  Object.keys(EMBED_WRAP_SELECTORS).forEach(fitEmbed);
+}
+window.addEventListener("resize", fitAllEmbeds);
+
+const players = {};
+const playersReady = {};
+let pendingGuideVideoId = null;
+
+function createPlayer(elementId, videoId, playerVars, events) {
+  return new YT.Player(elementId, {
+    videoId,
+    playerVars: Object.assign({
+      playsinline: 1,
+      rel: 0,
+      modestbranding: 1,
+      iv_load_policy: 3,
+      fs: 1
+    }, playerVars),
+    events
+  });
+}
+
+window.onYouTubeIframeAPIReady = function () {
+  players.hero = createPlayer("yt-hero", YT_IDS.intro, {
+    autoplay: 1, mute: 1, loop: 1, playlist: YT_IDS.intro, controls: 0
+  }, { onReady: () => fitEmbed("hero") });
+
+  players.crop = createPlayer("yt-crop", YT_IDS.cropChoice, {
+    autoplay: 1, mute: 1, loop: 1, playlist: YT_IDS.cropChoice, controls: 0
+  }, { onReady: () => { fitEmbed("crop"); playersReady.crop = true; } });
+
+  players.riceMethod = createPlayer("yt-rice-method", YT_IDS.riceMethod, {
+    autoplay: 1, mute: 1, loop: 1, playlist: YT_IDS.riceMethod, controls: 0
+  }, { onReady: () => { fitEmbed("riceMethod"); playersReady.riceMethod = true; } });
+
+  players.guide = createPlayer("yt-guide", YT_IDS["rice-seed"], {
+    autoplay: 0, controls: 1
+  }, {
+    onReady: () => {
+      fitEmbed("guide");
+      playersReady.guide = true;
+      if (pendingGuideVideoId) {
+        players.guide.loadVideoById(pendingGuideVideoId);
+        pendingGuideVideoId = null;
+      }
+    },
+    onStateChange: onGuideStateChange
+  });
+
+  players.complete = createPlayer("yt-complete", YT_IDS.complete, {
+    autoplay: 0, controls: 1
+  }, { onReady: () => { fitEmbed("complete"); playersReady.complete = true; } });
+};
+
+function onGuideStateChange(e) {
+  if (e.data === YT.PlayerState.ENDED) {
+    videoWatchedFully = true;
+    showScreen("complete", false);
+  } else if (e.data === YT.PlayerState.PLAYING) {
+    videoLoading.hidden = true;
+    startGuidePoll();
+  } else if (e.data === YT.PlayerState.BUFFERING) {
+    videoLoading.hidden = false;
+  } else if (e.data === YT.PlayerState.PAUSED) {
+    stopGuidePoll();
   }
-  cycle();
 }
 
-function stopNarration() {
-  if (!narration) return;
-  narration.pause();
-  narration.currentTime = 0;
-  narration = null;
+// ---- Polling loops replacing native "timeupdate" ----
+
+let cropPollTimer = null;
+function startCropPoll() {
+  stopCropPoll();
+  cropPollTimer = setInterval(() => {
+    if (activeScreen !== "crop" || !playersReady.crop || cropNudgeStarted) return;
+    const t = players.crop.getCurrentTime();
+    if (t >= 2) { cropNudgeStarted = true; startNudgeLoop(); }
+  }, 250);
+}
+function stopCropPoll() { if (cropPollTimer) clearInterval(cropPollTimer); cropPollTimer = null; }
+
+const dapogBtn = document.querySelector(".rice-choice.dapog");
+const butoBtn = document.querySelector(".rice-choice.buto");
+let riceCues = { dapog: false, buto: false, both: false };
+
+function resetRiceCues() {
+  riceCues = { dapog: false, buto: false, both: false };
+  dapogBtn.classList.remove("nudge", "nudge-minimal");
+  butoBtn.classList.remove("nudge", "nudge-minimal");
 }
 
-function playNarration(screen) {
-  const path = screen.dataset.audio;
-  if (!path) return;
-  narration = new Audio(path);
-  narration.play().catch(() => { narration = null; });
+function bounceOnce(btn, cls) {
+  btn.classList.add(cls);
+  setTimeout(() => btn.classList.remove(cls), NUDGE_DURATION);
 }
+
+let riceMethodPollTimer = null;
+function startRiceMethodPoll() {
+  stopRiceMethodPoll();
+  riceMethodPollTimer = setInterval(() => {
+    if (activeScreen !== "rice-method" || !playersReady.riceMethod) return;
+    const t = players.riceMethod.getCurrentTime();
+    if (t >= 2 && !riceCues.dapog) { riceCues.dapog = true; bounceOnce(dapogBtn, "nudge"); }
+    if (t >= 4 && !riceCues.buto) { riceCues.buto = true; bounceOnce(butoBtn, "nudge"); }
+    if (t >= 7 && !riceCues.both) {
+      riceCues.both = true;
+      bounceOnce(dapogBtn, "nudge-minimal");
+      bounceOnce(butoBtn, "nudge-minimal");
+    }
+  }, 250);
+}
+function stopRiceMethodPoll() { if (riceMethodPollTimer) clearInterval(riceMethodPollTimer); riceMethodPollTimer = null; }
+
+let guidePollTimer = null;
+function startGuidePoll() {
+  stopGuidePoll();
+  guidePollTimer = setInterval(() => {
+    if (activeScreen !== "video" || !playersReady.guide) return;
+    updateActiveStep(media[currentVideo]?.steps, players.guide.getCurrentTime());
+  }, 250);
+}
+function stopGuidePoll() { if (guidePollTimer) clearInterval(guidePollTimer); guidePollTimer = null; }
+
+// ---- Screen management ----
 
 function showScreen(name, narrate = true) {
-  stopNarration();
   if (name === "crop") {
     cropChosen = false;
     cropNudgeStarted = false;
     clearNudges();
-    cropVideo.currentTime = 0;
-    cropVideo.removeAttribute("muted");
-    cropVideo.defaultMuted = false;
-    cropVideo.muted = false;
-    cropVideo.play().catch(() => {
-      cropVideo.controls = true;
-      cropVideo.setAttribute("aria-label", "Play crop question video with sound");
-    });
+    if (playersReady.crop) { players.crop.seekTo(0); players.crop.unMute(); players.crop.playVideo(); }
+    startCropPoll();
   } else {
-    cropVideo.pause();
-    cropVideo.currentTime = 0;
+    if (playersReady.crop) { players.crop.pauseVideo(); players.crop.seekTo(0); }
     clearNudges();
+    stopCropPoll();
   }
+
   if (name === "rice-method") {
-    riceMethodVideo.currentTime = 0;
-    riceMethodVideo.removeAttribute("muted");
-    riceMethodVideo.defaultMuted = false;
-    riceMethodVideo.muted = false;
-    riceMethodVideo.play().catch(() => {
-      riceMethodVideo.controls = true;
-      riceMethodVideo.setAttribute("aria-label", "Play rice question video with sound");
-    });
     resetRiceCues();
+    if (playersReady.riceMethod) { players.riceMethod.seekTo(0); players.riceMethod.unMute(); players.riceMethod.playVideo(); }
+    startRiceMethodPoll();
   } else {
-    riceMethodVideo.pause();
-    riceMethodVideo.currentTime = 0;
+    if (playersReady.riceMethod) { players.riceMethod.pauseVideo(); players.riceMethod.seekTo(0); }
+    stopRiceMethodPoll();
   }
+
   if (name === "complete") {
-    completeVideo.currentTime = 0;
-    completeVideo.removeAttribute("muted");
-    completeVideo.defaultMuted = false;
-    completeVideo.muted = false;
-    completeVideo.loop = false;
-    completeVideo.play().catch(() => {
-      completeVideo.controls = true;
-      completeVideo.setAttribute("aria-label", "Play completion video with sound");
-    });
+    if (playersReady.complete) { players.complete.seekTo(0); players.complete.unMute(); players.complete.playVideo(); }
     completeActionChosen = false;
     startCompleteNudgeLoop();
     if (videoWatchedFully) {
@@ -181,15 +306,17 @@ function showScreen(name, narrate = true) {
       showCelebration();
     }
   } else {
-    completeVideo.pause();
-    completeVideo.currentTime = 0;
+    if (playersReady.complete) { players.complete.pauseVideo(); players.complete.seekTo(0); }
     clearCompleteNudges();
   }
-  if (name !== "video") { video.pause(); video.removeAttribute("src"); video.load(); }
+
+  if (name !== "video") {
+    if (playersReady.guide) players.guide.pauseVideo();
+    stopGuidePoll();
+  }
+
   screens.forEach(s => s.classList.toggle("active", s.dataset.screen === name));
   activeScreen = name;
-  const next = screens.find(s => s.dataset.screen === name);
-  if (narrate && next) playNarration(next);
 }
 
 const stepsPanel = document.querySelector(".steps-panel");
@@ -217,32 +344,20 @@ function updateActiveStep(steps, currentTime) {
   stepsList.querySelectorAll(".step-item").forEach((el, i) => el.classList.toggle("active", i === activeIndex));
 }
 
-let videoWatchedFully = false;
-
-const videoLoading = document.querySelector("#video-loading");
-
 function loadVideo(key) {
-  stopNarration();
   currentVideo = key;
   lastCropVideo = key;
   videoWatchedFully = false;
   const item = media[key];
   document.querySelector("#video-title").textContent = item.title;
-  document.querySelector("#missing-path").textContent = item.src;
-  missing.hidden = true;
-  fallbackNext.hidden = true;
   videoLoading.hidden = false;
   renderSteps(item.steps);
-  video.src = item.src;
-  video.load();
+  if (playersReady.guide) {
+    players.guide.loadVideoById(item.ytId);
+  } else {
+    pendingGuideVideoId = item.ytId;
+  }
   showScreen("video", false);
-  video.play().catch(() => {});
-}
-
-function mediaUnavailable() {
-  missing.hidden = false;
-  fallbackNext.hidden = false;
-  fallbackNext.textContent = "Complete guide →";
 }
 
 document.addEventListener("click", event => {
@@ -257,80 +372,12 @@ document.addEventListener("click", event => {
   }
   if (event.target.closest("[data-back]")) { showScreen(previousSelection); return; }
   const step = event.target.closest(".step-item");
-  if (step) { video.currentTime = Number(step.dataset.time); video.play().catch(() => {}); }
-});
-
-cropVideo.addEventListener("timeupdate", () => {
-  if (activeScreen !== "crop" || cropNudgeStarted) return;
-  if (cropVideo.currentTime >= 2) {
-    cropNudgeStarted = true;
-    startNudgeLoop();
+  if (step && playersReady.guide) {
+    players.guide.seekTo(Number(step.dataset.time), true);
+    players.guide.playVideo();
   }
 });
 
-cropVideo.addEventListener("ended", () => {
-  if (activeScreen !== "crop") return;
-  cropVideo.currentTime = 0;
-  cropVideo.play().catch(() => {});
-});
-
-const dapogBtn = document.querySelector(".rice-choice.dapog");
-const butoBtn = document.querySelector(".rice-choice.buto");
-let riceCues = { dapog: false, buto: false, both: false };
-
-function resetRiceCues() {
-  riceCues = { dapog: false, buto: false, both: false };
-  dapogBtn.classList.remove("nudge", "nudge-minimal");
-  butoBtn.classList.remove("nudge", "nudge-minimal");
-}
-
-function bounceOnce(btn, cls) {
-  btn.classList.add(cls);
-  setTimeout(() => btn.classList.remove(cls), NUDGE_DURATION);
-}
-
-riceMethodVideo.addEventListener("timeupdate", () => {
-  if (activeScreen !== "rice-method") return;
-  const t = riceMethodVideo.currentTime;
-  if (t >= 2 && !riceCues.dapog) { riceCues.dapog = true; bounceOnce(dapogBtn, "nudge"); }
-  if (t >= 4 && !riceCues.buto) { riceCues.buto = true; bounceOnce(butoBtn, "nudge"); }
-  if (t >= 7 && !riceCues.both) {
-    riceCues.both = true;
-    bounceOnce(dapogBtn, "nudge-minimal");
-    bounceOnce(butoBtn, "nudge-minimal");
-  }
-});
-
-riceMethodVideo.addEventListener("ended", () => {
-  if (activeScreen !== "rice-method") return;
-  resetRiceCues();
-  riceMethodVideo.currentTime = 0;
-  riceMethodVideo.play().catch(() => {});
-});
-
-video.addEventListener("error", mediaUnavailable);
-video.addEventListener("ended", () => { videoWatchedFully = true; showScreen("complete", false); });
-video.addEventListener("timeupdate", () => {
-  document.querySelector("#progress").value = video.duration ? (video.currentTime / video.duration) * 100 : 0;
-  document.querySelector("#time").textContent = `${formatTime(video.currentTime)} / ${formatTime(video.duration)}`;
-  updateActiveStep(media[currentVideo]?.steps, video.currentTime);
-});
-video.addEventListener("play", () => document.querySelector("#play").textContent = "❚❚");
-video.addEventListener("pause", () => document.querySelector("#play").textContent = "▶");
-video.addEventListener("waiting", () => { videoLoading.hidden = false; });
-video.addEventListener("playing", () => { videoLoading.hidden = true; });
-video.addEventListener("canplay", () => { videoLoading.hidden = true; });
-
-document.querySelector("#play").addEventListener("click", () => video.paused ? video.play() : video.pause());
-document.querySelector("#progress").addEventListener("input", e => { if (video.duration) video.currentTime = video.duration * e.target.value / 100; });
-document.querySelector("#mute").addEventListener("click", event => { video.muted = !video.muted; event.currentTarget.textContent = video.muted ? "×" : "♩"; });
-document.querySelector("#fullscreen").addEventListener("click", () => document.querySelector(".player-shell").requestFullscreen?.());
-fallbackNext.addEventListener("click", () => showScreen("complete", false));
 document.querySelector("#kasunod-btn").addEventListener("click", () => showScreen("complete", false));
 document.querySelector("#repeat-video").addEventListener("click", () => { completeActionChosen = true; clearCompleteNudges(); if (lastCropVideo) loadVideo(lastCropVideo); });
 document.querySelector("#finish-guide").addEventListener("click", () => { completeActionChosen = true; clearCompleteNudges(); showScreen("welcome"); });
-
-function formatTime(seconds) {
-  if (!Number.isFinite(seconds)) return "0:00";
-  return `${Math.floor(seconds / 60)}:${String(Math.floor(seconds % 60)).padStart(2, "0")}`;
-}
