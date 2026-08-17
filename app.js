@@ -283,7 +283,7 @@ function showScreen(name, narrate = true) {
     if (playersReady.crop) { players.crop.seekTo(0); players.crop.unMute(); players.crop.playVideo(); }
     startCropPoll();
   } else {
-    if (playersReady.crop) { players.crop.pauseVideo(); players.crop.seekTo(0); }
+    if (playersReady.crop) { players.crop.pauseVideo(); players.crop.seekTo(0); players.crop.mute(); }
     clearNudges();
     stopCropPoll();
   }
@@ -293,7 +293,7 @@ function showScreen(name, narrate = true) {
     if (playersReady.riceMethod) { players.riceMethod.seekTo(0); players.riceMethod.unMute(); players.riceMethod.playVideo(); }
     startRiceMethodPoll();
   } else {
-    if (playersReady.riceMethod) { players.riceMethod.pauseVideo(); players.riceMethod.seekTo(0); }
+    if (playersReady.riceMethod) { players.riceMethod.pauseVideo(); players.riceMethod.seekTo(0); players.riceMethod.mute(); }
     stopRiceMethodPoll();
   }
 
@@ -306,12 +306,12 @@ function showScreen(name, narrate = true) {
       showCelebration();
     }
   } else {
-    if (playersReady.complete) { players.complete.pauseVideo(); players.complete.seekTo(0); }
+    if (playersReady.complete) { players.complete.pauseVideo(); players.complete.seekTo(0); players.complete.mute(); }
     clearCompleteNudges();
   }
 
   if (name !== "video") {
-    if (playersReady.guide) players.guide.pauseVideo();
+    if (playersReady.guide) { players.guide.pauseVideo(); players.guide.mute(); }
     stopGuidePoll();
   }
 
