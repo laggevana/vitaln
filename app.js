@@ -317,6 +317,7 @@ function showScreen(name, narrate = true) {
 
   screens.forEach(s => s.classList.toggle("active", s.dataset.screen === name));
   activeScreen = name;
+  requestAnimationFrame(fitAllEmbeds);
 }
 
 const stepsPanel = document.querySelector(".steps-panel");
